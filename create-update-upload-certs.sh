@@ -50,7 +50,7 @@ chmod 555 $DEPLOY_HOOK_PATH
 S3_COMMAND_EXTRA_ARGS=""
 if [ ! -z "$CERT_BUCKET_KMS_KEY" ]
 then
-  S3_COMMAND_EXTRA_ARGS="--sse \"aws:kms\" --sse-kms-key-id \"${CERT_BUCKET_KMS_KEY}\""
+  S3_COMMAND_EXTRA_ARGS="--sse aws:kms --sse-kms-key-id ${CERT_BUCKET_KMS_KEY}"
 fi
 
 # Test bucket access
