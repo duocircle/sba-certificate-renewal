@@ -47,13 +47,19 @@ ${SNS_PUBLISH_SUCCESS_COMMAND}
 EOF
 chmod 555 $DEPLOY_HOOK_PATH
 
+S3_COMMAND_EXTRA_ARGS=""
+if [ ! -z "$CERT_BUCKET_KMS_KEY" ]
+then
+  S3_COMMAND_EXTRA_ARGS="--sse \"aws:kms\" --sse-kms-key-id \"${CERT_BUCKET_KMS_KEY}\""
+fi
+
 # Test bucket access
 touch test_write.txt
-aws s3 cp ./test_write.txt "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt" || exit_with_failure 50 "Could not write to S3 bucket - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"
-aws s3 rm "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"                  || exit_with_failure 60 "Could not delete from S3 bucket - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"
+aws s3 cp $S3_COMMAND_EXTRA_ARGS ./test_write.txt "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt" || exit_with_failure 50 "Could not write to S3 bucket - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"
+aws s3 rm "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"                                         || exit_with_failure 60 "Could not delete from S3 bucket - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}test_write.txt"
 
 # Sync s3 to local
-aws s3 sync --exclude "${CERT_BUCKET_PATH}live/*" --no-progress "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}" $LETS_ENCRYPT_DIRECTORY/ || exit_with_failure 70 "Could not sync S3 bucket to local environment - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}"
+aws s3 sync $S3_COMMAND_EXTRA_ARGS --exclude "${CERT_BUCKET_PATH}live/*" --no-progress "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}" $LETS_ENCRYPT_DIRECTORY/ || exit_with_failure 70 "Could not sync S3 bucket to local environment - s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}"
 #mkdir -p $LETS_ENCRYPT_DIRECTORY/ && cp -r /mnt/certs/* $LETS_ENCRYPT_DIRECTORY/
 
 # Issue or renew cert
@@ -82,7 +88,7 @@ then
   cp -a "$LETS_ENCRYPT_DIRECTORY/live/${CERT_HOSTNAME}/chain.pem" "$LETS_ENCRYPT_DIRECTORY/latest/${CERT_HOSTNAME}/cachain.pem"                  || exit_with_failure 96 "Could not save certs to S3"
 
   # Sync local to s3
-  aws s3 sync --no-progress --exclude "live/*" $LETS_ENCRYPT_DIRECTORY/ "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}" || exit_with_failure 100 "Could not synchronize certbot datadir with S3.  Indicates a configuration problem."
+  aws s3 sync $S3_COMMAND_EXTRA_ARGS --no-progress --exclude "live/*" $LETS_ENCRYPT_DIRECTORY/ "s3://${CERT_BUCKET_NAME}${CERT_BUCKET_PATH}" || exit_with_failure 100 "Could not synchronize certbot datadir with S3.  Indicates a configuration problem."
 else
   echo "Skipping cert copy and sync because this is a dry run"
 fi
