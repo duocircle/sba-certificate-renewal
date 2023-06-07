@@ -75,7 +75,7 @@ if [ -d "$LETS_ENCRYPT_DIRECTORY/archive/${CERT_HOSTNAME}" ] && [ ! -L "$LETS_EN
   certbot renew --deploy-hook "${DEPLOY_HOOK_PATH}" ${DRY_RUN_CMD} || exit_with_failure 80 "certbot renew command failed.  There is likely an expiring cert that can't be renewed.  ACTION IS NECESSARY! Check the logs"
 else
   echo "Archive directory [$LETS_ENCRYPT_DIRECTORY/archive/${CERT_HOSTNAME}] not found, creating new cert"
-  certbot certonly ${DRY_RUN_CMD} -n --agree-tos --email "${CERT_REGISTRATION_EMAIL}" --dns-route53 -d "${CERT_HOSTNAME}" ${CERT_REGISTER_WILDCARD_CMD} ${CERT_ADDITIONAL_HOSTNAMES_CMD} || exit_with_failure 90 "certbot failed to create an initial certificate. ACTION IS NECESSARY! Check the logs"
+  certbot certonly ${DRY_RUN_CMD} -n --agree-tos --email "${CERT_REGISTRATION_EMAIL}" --key-type rsa --dns-route53 -d "${CERT_HOSTNAME}" ${CERT_REGISTER_WILDCARD_CMD} ${CERT_ADDITIONAL_HOSTNAMES_CMD} || exit_with_failure 90 "certbot failed to create an initial certificate. ACTION IS NECESSARY! Check the logs"
 fi
 
 # Copy live certs to latest directory
